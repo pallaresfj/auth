@@ -29,8 +29,7 @@ class GoogleAuthController extends Controller
         $driver = Socialite::driver('google')
             ->scopes(['openid', 'profile', 'email'])
             ->with([
-                'prompt' => 'login select_account consent',
-                'max_age' => 0,
+                'prompt' => 'select_account',
             ]);
 
         if (! empty($domains)) {
