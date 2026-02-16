@@ -29,7 +29,7 @@ class GoogleAuthController extends Controller
         $driver = Socialite::driver('google')
             ->scopes(['openid', 'profile', 'email'])
             ->with([
-                'prompt' => 'select_account consent',
+                'prompt' => 'login select_account consent',
                 'max_age' => 0,
             ]);
 
@@ -123,17 +123,7 @@ class GoogleAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        $homeUrl = route('home', ['logged_out' => 1]);
-        $isHttpsHome = parse_url($homeUrl, PHP_URL_SCHEME) === 'https';
-
-        if (! $isHttpsHome) {
-            return redirect()->to($homeUrl);
-        }
-
-        $googleLogoutUrl = 'https://www.google.com/accounts/Logout?continue='
-            .urlencode('https://appengine.google.com/_ah/logout?continue='.urlencode($homeUrl));
-
-        return redirect()->away($googleLogoutUrl);
+        return redirect()->route('home', ['logged_out' => 1]);
     }
 
     private function isInstitutionalEmail(string $email): bool
