@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
@@ -126,7 +127,15 @@ class GoogleAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('home', ['logged_out' => 1]);
+        $response = redirect()->route('home', ['logged_out' => 1]);
+
+        $response->withCookie(Cookie::forget(
+            config('session.cookie'),
+            config('session.path', '/'),
+            config('session.domain')
+        ));
+
+        return $response;
     }
 
     private function isInstitutionalEmail(string $email): bool
