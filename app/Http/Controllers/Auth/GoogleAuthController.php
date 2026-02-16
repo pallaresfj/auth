@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\GoogleProvider;
 use Throwable;
 
 class GoogleAuthController extends Controller
@@ -26,7 +27,10 @@ class GoogleAuthController extends Controller
     {
         $domains = config('sso.institution_email_domains', []);
 
-        $driver = Socialite::driver('google')
+        /** @var GoogleProvider $driver */
+        $driver = Socialite::driver('google');
+
+        $driver
             ->scopes(['openid', 'profile', 'email'])
             ->with([
                 'prompt' => 'select_account',
