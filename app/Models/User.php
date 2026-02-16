@@ -36,13 +36,14 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        if (! $this->is_active) {
-            return false;
-        }
+        return $this->is_active && $this->isSuperAdmin();
+    }
 
+    public function isSuperAdmin(): bool
+    {
         $superAdminEmails = config('sso.superadmin_emails', []);
 
-        return in_array(mb_strtolower($this->email), $superAdminEmails, true);
+        return in_array(mb_strtolower((string) $this->email), $superAdminEmails, true);
     }
 
     public function auditLogins(): HasMany

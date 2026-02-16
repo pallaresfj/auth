@@ -26,7 +26,12 @@ class GoogleAuthController extends Controller
     {
         $domains = config('sso.institution_email_domains', []);
 
-        $driver = Socialite::driver('google')->scopes(['openid', 'profile', 'email']);
+        $driver = Socialite::driver('google')
+            ->scopes(['openid', 'profile', 'email'])
+            ->with([
+                'prompt' => 'select_account consent',
+                'max_age' => 0,
+            ]);
 
         if (! empty($domains)) {
             $driver->with(['hd' => $domains[0]]);
@@ -86,7 +91,20 @@ class GoogleAuthController extends Controller
             'email' => $email,
         ]);
 
-        return redirect()->intended('/admin');
+        if ($user->isSuperAdmin()) {
+            return redirect()->intended('/admin');
+        }
+
+        $intended = (string) $request->session()->get('url.intended', '');
+        $wantsAdminPanel = str_contains($intended, '/admin');
+
+        if ($wantsAdminPanel) {
+            return redirect()
+                ->route('home', ['access' => 'denied'])
+                ->with('error', 'Tu cuenta no tiene acceso al panel administrativo.');
+        }
+
+        return redirect()->route('home');
     }
 
     public function logout(Request $request): RedirectResponse
@@ -98,11 +116,24 @@ class GoogleAuthController extends Controller
             $this->auditLogger->log('logout', 'success', $user);
         }
 
-        Auth::guard('web')->logout();
+        if (Auth::guard('web')->check()) {
+            Auth::guard('web')->logout();
+        }
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        $homeUrl = route('home', ['logged_out' => 1]);
+        $isHttpsHome = parse_url($homeUrl, PHP_URL_SCHEME) === 'https';
+
+        if (! $isHttpsHome) {
+            return redirect()->to($homeUrl);
+        }
+
+        $googleLogoutUrl = 'https://www.google.com/accounts/Logout?continue='
+            .urlencode('https://appengine.google.com/_ah/logout?continue='.urlencode($homeUrl));
+
+        return redirect()->away($googleLogoutUrl);
     }
 
     private function isInstitutionalEmail(string $email): bool
