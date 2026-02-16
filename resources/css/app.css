@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -8,4 +10,23 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Inter', sans-serif;
+    --color-primary: #17cf17;
+    --color-background-light: #f6f8f6;
+    --color-background-dark: #112111;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+}
+
+@layer base {
+    .sso-home {
+        font-family: 'Inter', sans-serif;
+    }
+}
+
+@layer utilities {
+    .bg-agro-pattern {
+        background-image: radial-gradient(circle at 2px 2px, #17cf1715 1px, transparent 0);
+        background-size: 24px 24px;
+    }
 }
