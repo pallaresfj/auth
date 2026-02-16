@@ -127,7 +127,17 @@ class GoogleAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        $response = redirect()->route('home', ['logged_out' => 1]);
+        $homeUrl = route('home', ['logged_out' => 1]);
+        $isHttpsHome = parse_url($homeUrl, PHP_URL_SCHEME) === 'https';
+
+        if ($isHttpsHome) {
+            $googleLogoutUrl = 'https://accounts.google.com/Logout?continue='
+                .urlencode('https://appengine.google.com/_ah/logout?continue='.urlencode($homeUrl));
+
+            $response = redirect()->away($googleLogoutUrl);
+        } else {
+            $response = redirect()->to($homeUrl);
+        }
 
         $response->withCookie(Cookie::forget(
             config('session.cookie'),
