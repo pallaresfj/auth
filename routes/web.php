@@ -17,6 +17,11 @@ Route::get('/', function () {
 Route::get('/login', [GoogleAuthController::class, 'login'])->name('login');
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+Route::get('/auth/google/session-check/start', [GoogleAuthController::class, 'startSessionCheck'])
+    ->middleware('auth')
+    ->name('auth.google.session-check.start');
+Route::get('/auth/google/session-check/callback', [GoogleAuthController::class, 'completeSessionCheck'])
+    ->name('auth.google.session-check.callback');
 Route::match(['GET', 'POST'], '/logout', [GoogleAuthController::class, 'logout'])->name('logout');
 
 Route::get('/oauth/userinfo', UserInfoController::class)

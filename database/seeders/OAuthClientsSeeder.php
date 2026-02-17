@@ -16,12 +16,17 @@ class OAuthClientsSeeder extends Seeder
         $definitions = [
             [
                 'name' => 'planes',
-                'redirect_uris' => ['https://planes.iedagropivijay.edu.co/auth/callback'],
+                'redirect_uris' => ['https://gestionplanes.test/sso/callback'],
                 'scopes' => ['openid', 'email', 'profile'],
             ],
             [
                 'name' => 'asistencia',
-                'redirect_uris' => ['https://asistencia.iedagropivijay.edu.co/auth/callback'],
+                'redirect_uris' => ['https://teachingassistance.test/sso/callback'],
+                'scopes' => ['openid', 'email', 'profile'],
+            ],
+            [
+                'name' => 'silo',
+                'redirect_uris' => ['http://localhost:8000/sso/callback'],
                 'scopes' => ['openid', 'email', 'profile'],
             ],
         ];

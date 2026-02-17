@@ -47,7 +47,7 @@ class OAuthClientResource extends Resource
                     ->afterStateHydrated(function (TagsInput $component, mixed $state): void {
                         $component->state(static::normalizeStringArrayState($state));
                     })
-                    ->helperText('Cada URI debe ser exacta, HTTPS y sin wildcard.'),
+                    ->helperText('Cada URI debe ser exacta, sin wildcard y con HTTPS (excepto localhost/127.0.0.1 en HTTP).'),
                 TagsInput::make('scopes')
                     ->label('Scopes permitidos')
                     ->required()
@@ -180,6 +180,7 @@ class OAuthClientResource extends Resource
     public static function sanitizeRedirectUris(array $uris): array
     {
         $hosts = config('sso.allowed_redirect_hosts', []);
+        $insecureHosts = config('sso.insecure_redirect_hosts', []);
 
         $normalized = collect($uris)
             ->map(static fn ($uri): string => trim((string) $uri))
@@ -207,13 +208,16 @@ class OAuthClientResource extends Resource
                 ]);
             }
 
-            if (mb_strtolower((string) $parts['scheme']) !== 'https') {
+            $scheme = mb_strtolower((string) $parts['scheme']);
+            $host = mb_strtolower((string) $parts['host']);
+
+            if ($scheme !== 'https' && ! ($scheme === 'http' && in_array($host, $insecureHosts, true))) {
                 throw ValidationException::withMessages([
-                    'redirect_uris' => "La redirect URI debe usar HTTPS: {$uri}",
+                    'redirect_uris' => "La redirect URI debe usar HTTPS (solo localhost puede usar HTTP): {$uri}",
                 ]);
             }
 
-            if (! in_array(mb_strtolower((string) $parts['host']), $hosts, true)) {
+            if (! in_array($host, $hosts, true)) {
                 throw ValidationException::withMessages([
                     'redirect_uris' => "Host no permitido en redirect URI: {$uri}",
                 ]);

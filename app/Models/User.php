@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasAvatar
 {
     use HasApiTokens;
     use HasFactory;
@@ -20,6 +21,7 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'google_id',
+        'google_avatar_url',
         'is_active',
         'last_login_at',
     ];
@@ -44,6 +46,21 @@ class User extends Authenticatable implements FilamentUser
         $superAdminEmails = config('sso.superadmin_emails', []);
 
         return in_array(mb_strtolower((string) $this->email), $superAdminEmails, true);
+    }
+
+    public function getFilamentAvatarUrl(): ?string
+    {
+        $avatarUrl = trim((string) $this->google_avatar_url);
+
+        if ($avatarUrl === '') {
+            return null;
+        }
+
+        if (! filter_var($avatarUrl, FILTER_VALIDATE_URL)) {
+            return null;
+        }
+
+        return $avatarUrl;
     }
 
     public function auditLogins(): HasMany

@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\App\Http\Middleware\AuditPassportFlow::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\EnsureGoogleSessionIsAlive::class);
+        $middleware->validateCsrfTokens(except: [
+            'admin/logout',
+        ]);
 
         $middleware->alias([
             'openid.scope' => \App\Http\Middleware\EnsureOpenIdScope::class,
