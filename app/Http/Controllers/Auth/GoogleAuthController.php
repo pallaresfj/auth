@@ -106,7 +106,7 @@ class GoogleAuthController extends Controller
                 ->with('error', 'Tu cuenta no tiene acceso al panel administrativo.');
         }
 
-        return redirect()->route('home');
+        return redirect()->intended(route('home'));
     }
 
     public function startSessionCheck(Request $request): RedirectResponse
