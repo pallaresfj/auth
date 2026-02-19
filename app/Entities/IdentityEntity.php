@@ -31,11 +31,16 @@ class IdentityEntity implements IdentityEntityInterface
      */
     public function getClaims(array $scopes = []): array
     {
+        $avatarUrl = trim((string) $this->user->google_avatar_url);
+        $picture = filter_var($avatarUrl, FILTER_VALIDATE_URL) ? $avatarUrl : null;
+
         return [
             'name' => $this->user->name,
             'email' => $this->user->email,
             'is_active' => (bool) $this->user->is_active,
             'email_verified' => true,
+            'picture' => $picture,
+            'google_avatar_url' => $picture,
         ];
     }
 }

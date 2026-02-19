@@ -82,7 +82,9 @@ class UserResource extends Resource
             ])
             ->filters([])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->iconButton()
+                    ->tooltip('Editar usuario'),
             ])
             ->toolbarActions([])
             ->defaultSort('email');

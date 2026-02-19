@@ -6,7 +6,9 @@
     <title>SILO - Solicitud de autorizacion</title>
     <style>
         :root {
-            --primary: #0e5326;
+            --primary: #1d6362;
+            --primary-dark: #154847;
+            --primary-soft: #e7f3f2;
             --bg: #f6f6f8;
             --card: #ffffff;
             --muted: #64748b;
@@ -48,7 +50,7 @@
             width: 74px;
             height: 74px;
             border-radius: 999px;
-            background: #e8f2eb;
+            background: var(--primary-soft);
             color: var(--primary);
             margin: 0 auto 1rem;
             display: grid;
@@ -100,7 +102,7 @@
             width: 28px;
             height: 28px;
             border-radius: 999px;
-            background: #e8f2eb;
+            background: var(--primary-soft);
             color: var(--primary);
             display: grid;
             place-items: center;
@@ -157,11 +159,11 @@
         .btn-approve {
             background: var(--primary);
             color: #fff;
-            box-shadow: 0 10px 22px rgba(14, 83, 38, 0.24);
+            box-shadow: 0 10px 22px rgba(29, 99, 98, 0.24);
         }
 
         .btn-approve:hover {
-            background: #0b4520;
+            background: var(--primary-dark);
         }
 
         .btn-deny {

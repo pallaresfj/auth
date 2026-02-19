@@ -11,7 +11,7 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
     --font-display: 'Inter', sans-serif;
-    --color-primary: #17cf17;
+    --color-primary: #1d6362;
     --color-background-light: #f6f8f6;
     --color-background-dark: #112111;
     --radius-lg: 0.5rem;
@@ -26,7 +26,7 @@
 
 @layer utilities {
     .bg-agro-pattern {
-        background-image: radial-gradient(circle at 2px 2px, #17cf1715 1px, transparent 0);
+        background-image: radial-gradient(circle at 2px 2px, #1d636215 1px, transparent 0);
         background-size: 24px 24px;
     }
 }

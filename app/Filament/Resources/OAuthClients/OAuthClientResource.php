@@ -70,7 +70,7 @@ class OAuthClientResource extends Resource
                     ->label('Client ID')
                     ->searchable()
                     ->copyable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('name')
                     ->label('Nombre')
                     ->searchable()
@@ -82,7 +82,8 @@ class OAuthClientResource extends Resource
                 TextColumn::make('scopes')
                     ->label('Scopes')
                     ->badge()
-                    ->separator(','),
+                    ->separator(',')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('revoked')
                     ->label('Revocado')
                     ->boolean()
@@ -90,15 +91,20 @@ class OAuthClientResource extends Resource
                 TextColumn::make('updated_at')
                     ->label('Actualizado')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([])
             ->recordActions([
                 EditAction::make()
+                    ->iconButton()
+                    ->tooltip('Editar cliente OAuth')
                     ->using(fn (OAuthClient $record, array $data): OAuthClient => static::updateClient($record, $data)),
                 Action::make('regenerate_secret')
                     ->label('Regenerar secret')
                     ->icon(Heroicon::OutlinedArrowPath)
+                    ->iconButton()
+                    ->tooltip('Regenerar secret')
                     ->requiresConfirmation()
                     ->action(function (OAuthClient $record): void {
                         $secret = static::regenerateSecret($record);
@@ -112,6 +118,8 @@ class OAuthClientResource extends Resource
                 Action::make('toggle_revoked')
                     ->label(fn (OAuthClient $record): string => $record->revoked ? 'Activar' : 'Revocar')
                     ->icon(Heroicon::OutlinedNoSymbol)
+                    ->iconButton()
+                    ->tooltip(fn (OAuthClient $record): string => $record->revoked ? 'Activar cliente' : 'Revocar cliente')
                     ->color(fn (OAuthClient $record): string => $record->revoked ? 'success' : 'danger')
                     ->requiresConfirmation()
                     ->action(fn (OAuthClient $record): bool => $record->update(['revoked' => ! $record->revoked])),

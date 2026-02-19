@@ -17,11 +17,16 @@ class UserInfoController extends Controller
         abort_unless($user, 401, 'Unauthorized');
         abort_if(! $user->is_active, 403, 'User is inactive');
 
+        $avatarUrl = trim((string) $user->google_avatar_url);
+        $picture = filter_var($avatarUrl, FILTER_VALIDATE_URL) ? $avatarUrl : null;
+
         return response()->json([
             'sub' => (string) $user->getAuthIdentifier(),
             'name' => $user->name,
             'email' => $user->email,
             'is_active' => (bool) $user->is_active,
+            'picture' => $picture,
+            'google_avatar_url' => $picture,
         ]);
     }
 }

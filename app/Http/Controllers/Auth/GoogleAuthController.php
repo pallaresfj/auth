@@ -35,7 +35,7 @@ class GoogleAuthController extends Controller
 
     public function redirectToGoogle(): RedirectResponse
     {
-        return $this->buildGoogleDriver('select_account', route('auth.google.callback'))->redirect();
+        return $this->buildGoogleDriver('select_account', $this->resolveGoogleCallbackUrl())->redirect();
     }
 
     public function handleGoogleCallback(Request $request): RedirectResponse
@@ -123,7 +123,7 @@ class GoogleAuthController extends Controller
         $request->session()->put(self::SESSION_CHECK_STARTED_AT, now()->timestamp);
 
         return $this
-            ->buildGoogleDriver('none', route('auth.google.session-check.callback'))
+            ->buildGoogleDriver('none', $this->resolveGoogleSessionCheckCallbackUrl())
             ->redirect();
     }
 
@@ -148,7 +148,7 @@ class GoogleAuthController extends Controller
 
         try {
             $googleUser = Socialite::driver('google')
-                ->redirectUrl(route('auth.google.session-check.callback'))
+                ->redirectUrl($this->resolveGoogleSessionCheckCallbackUrl())
                 ->user();
         } catch (Throwable) {
             return $this->forceLogoutAfterSessionCheckFailure($request);
@@ -446,5 +446,19 @@ class GoogleAuthController extends Controller
         }
 
         return false;
+    }
+
+    private function resolveGoogleCallbackUrl(): string
+    {
+        $configured = trim((string) config('services.google.redirect', ''));
+
+        return $configured !== '' ? $configured : route('auth.google.callback');
+    }
+
+    private function resolveGoogleSessionCheckCallbackUrl(): string
+    {
+        $configured = trim((string) config('services.google.session_check_redirect', ''));
+
+        return $configured !== '' ? $configured : route('auth.google.session-check.callback');
     }
 }
