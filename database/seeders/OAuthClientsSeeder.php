@@ -26,7 +26,10 @@ class OAuthClientsSeeder extends Seeder
             ],
             [
                 'name' => 'silo',
-                'redirect_uris' => ['http://localhost:8000/sso/callback'],
+                'redirect_uris' => [
+                    'https://silo.sharedwithexpose.com/sso/callback',
+                    'https://silo.sharedwithexpose.com/sso/session-check/callback',
+                ],
                 'scopes' => ['openid', 'email', 'profile'],
             ],
         ];

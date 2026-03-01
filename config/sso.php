@@ -42,12 +42,12 @@ return [
 
     'cors_allowed_origins' => $csv(env(
         'CORS_ALLOWED_ORIGINS',
-        'https://gestionplanes.test,https://teachingassistance.test,http://localhost:8000'
+        'https://gestionplanes.test,https://teachingassistance.test,https://silo.sharedwithexpose.com'
     )),
 
     'allowed_redirect_hosts' => $csv(env(
         'SSO_ALLOWED_REDIRECT_HOSTS',
-        'gestionplanes.test,teachingassistance.test,localhost,127.0.0.1'
+        'gestionplanes.test,teachingassistance.test,localhost,127.0.0.1,silo.sharedwithexpose.com'
     )),
 
     'insecure_redirect_hosts' => $csv(env(
@@ -57,7 +57,7 @@ return [
 
     'post_logout_redirect_hosts' => $csv(env(
         'SSO_POST_LOGOUT_REDIRECT_HOSTS',
-        'localhost,127.0.0.1,gestionplanes.test,teachingassistance.test'
+        'localhost,127.0.0.1,gestionplanes.test,teachingassistance.test,auth.sharedwithexpose.com,silo.sharedwithexpose.com'
     )),
 
     'google_logout_from_browser' => (bool) env('GOOGLE_LOGOUT_FROM_BROWSER', true),
