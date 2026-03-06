@@ -19,6 +19,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Js;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -98,6 +99,22 @@ class OAuthClientResource extends Resource
             ])
             ->filters([])
             ->recordActions([
+                Action::make('copy_client_id')
+                    ->label('Copiar Client ID')
+                    ->icon(Heroicon::OutlinedClipboardDocument)
+                    ->iconButton()
+                    ->tooltip('Copiar Client ID')
+                    ->alpineClickHandler(function (OAuthClient $record): string {
+                        $clientIdJs = Js::from((string) $record->getKey());
+                        $successMessageJs = Js::from('Client ID copiado');
+                        $failureMessageJs = Js::from('No se pudo copiar Client ID');
+
+                        return <<<JS
+                            window.navigator.clipboard.writeText({$clientIdJs})
+                                .then(() => new window.FilamentNotification().title({$successMessageJs}).success().send())
+                                .catch(() => new window.FilamentNotification().title({$failureMessageJs}).danger().send())
+                        JS;
+                    }),
                 EditAction::make()
                     ->iconButton()
                     ->tooltip('Editar cliente OAuth')
@@ -115,6 +132,32 @@ class OAuthClientResource extends Resource
                             ->title('Nuevo client secret generado')
                             ->body("Guárdalo ahora. Secret: {$secret}")
                             ->success()
+                            ->send();
+                    }),
+                Action::make('generate_frontchannel_secret')
+                    ->label('Generar frontchannel secret')
+                    ->icon(Heroicon::OutlinedShieldCheck)
+                    ->iconButton()
+                    ->tooltip('Generar SSO_FRONTCHANNEL_LOGOUT_SECRETS')
+                    ->schema([
+                        TextInput::make('client_key')
+                            ->label('Clave del cliente')
+                            ->required()
+                            ->maxLength(64)
+                            ->default(fn (OAuthClient $record): string => static::suggestFrontchannelClientKey($record))
+                            ->helperText('Ejemplo: planes (solo minúsculas, números y guiones).'),
+                    ])
+                    ->modalHeading('Generar frontchannel secret')
+                    ->modalDescription('Este valor no se guarda en base de datos. Cópialo y agrégalo manualmente en .env.')
+                    ->modalSubmitActionLabel('Generar')
+                    ->action(function (OAuthClient $record, array $data): void {
+                        $entry = static::generateFrontchannelSecretEntry((string) ($data['client_key'] ?? ''));
+
+                        Notification::make()
+                            ->title('Frontchannel secret generado')
+                            ->body("Cliente: {$record->name}\nEntrada .env: {$entry}")
+                            ->success()
+                            ->persistent()
                             ->send();
                     }),
                 Action::make('toggle_revoked')
@@ -187,6 +230,14 @@ class OAuthClientResource extends Resource
         $record->save();
 
         return (string) $record->plainSecret;
+    }
+
+    public static function generateFrontchannelSecretEntry(string $clientKey): string
+    {
+        $normalizedKey = static::sanitizeFrontchannelClientKey($clientKey);
+        $secret = bin2hex(random_bytes(32));
+
+        return "{$normalizedKey}|{$secret}";
     }
 
     /**
@@ -295,6 +346,35 @@ class OAuthClientResource extends Resource
         });
     }
 
+    public static function suggestFrontchannelClientKey(OAuthClient $record): string
+    {
+        $redirectUris = static::normalizeStringArrayState($record->redirect_uris);
+
+        foreach ($redirectUris as $uri) {
+            $host = parse_url($uri, PHP_URL_HOST);
+
+            if (! is_string($host) || $host === '') {
+                continue;
+            }
+
+            $firstLabel = explode('.', mb_strtolower($host))[0] ?? '';
+            $candidate = trim((string) preg_replace('/[^a-z0-9-]+/', '-', $firstLabel), '-');
+
+            if ($candidate !== '') {
+                return $candidate;
+            }
+        }
+
+        $nameCandidate = Str::of((string) $record->name)
+            ->lower()
+            ->ascii()
+            ->replaceMatches('/[^a-z0-9]+/', '-')
+            ->trim('-')
+            ->value();
+
+        return $nameCandidate !== '' ? $nameCandidate : 'cliente';
+    }
+
     /**
      * @return array<int, string>
      */
@@ -333,5 +413,18 @@ class OAuthClientResource extends Resource
             ->filter()
             ->values()
             ->all();
+    }
+
+    private static function sanitizeFrontchannelClientKey(string $clientKey): string
+    {
+        $normalized = mb_strtolower(trim($clientKey));
+
+        if ($normalized === '' || preg_match('/^[a-z0-9-]+$/', $normalized) !== 1) {
+            throw ValidationException::withMessages([
+                'client_key' => 'La clave debe contener solo minúsculas, números y guiones.',
+            ]);
+        }
+
+        return $normalized;
     }
 }

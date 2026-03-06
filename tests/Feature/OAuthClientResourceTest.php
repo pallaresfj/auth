@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Filament\Resources\OAuthClients\OAuthClientResource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class OAuthClientResourceTest extends TestCase
@@ -78,5 +79,21 @@ class OAuthClientResourceTest extends TestCase
         $this->assertDatabaseMissing('oauth_refresh_tokens', ['id' => 'refresh-token-1']);
         $this->assertDatabaseMissing('oauth_auth_codes', ['id' => 'auth-code-1']);
     }
-}
 
+    public function test_generate_frontchannel_secret_entry_uses_valid_format(): void
+    {
+        $entry = OAuthClientResource::generateFrontchannelSecretEntry('Planes-App');
+
+        [$clientKey, $secret] = explode('|', $entry, 2);
+
+        $this->assertSame('planes-app', $clientKey);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $secret);
+    }
+
+    public function test_generate_frontchannel_secret_entry_rejects_invalid_key(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        OAuthClientResource::generateFrontchannelSecretEntry('planes app');
+    }
+}
