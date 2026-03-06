@@ -6,6 +6,7 @@ use App\Filament\Resources\OAuthClients\Pages\ManageOAuthClients;
 use App\Models\OAuthClient;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
@@ -17,6 +18,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -123,6 +125,12 @@ class OAuthClientResource extends Resource
                     ->color(fn (OAuthClient $record): string => $record->revoked ? 'success' : 'danger')
                     ->requiresConfirmation()
                     ->action(fn (OAuthClient $record): bool => $record->update(['revoked' => ! $record->revoked])),
+                DeleteAction::make()
+                    ->iconButton()
+                    ->tooltip('Eliminar cliente OAuth')
+                    ->modalDescription('Se eliminará el cliente y sus tokens asociados.')
+                    ->successNotificationTitle('Cliente OAuth eliminado')
+                    ->using(fn (OAuthClient $record): bool => static::deleteClient($record)),
             ])
             ->toolbarActions([])
             ->defaultSort('created_at', 'desc');
@@ -182,15 +190,14 @@ class OAuthClientResource extends Resource
     }
 
     /**
-     * @param  array<int, mixed>  $uris
      * @return array<int, string>
      */
-    public static function sanitizeRedirectUris(array $uris): array
+    public static function sanitizeRedirectUris(mixed $uris): array
     {
         $hosts = config('sso.allowed_redirect_hosts', []);
         $insecureHosts = config('sso.insecure_redirect_hosts', []);
 
-        $normalized = collect($uris)
+        $normalized = collect(static::normalizeStringArrayState($uris))
             ->map(static fn ($uri): string => trim((string) $uri))
             ->filter()
             ->values();
@@ -236,14 +243,13 @@ class OAuthClientResource extends Resource
     }
 
     /**
-     * @param  array<int, mixed>  $scopes
      * @return array<int, string>
      */
-    public static function sanitizeScopes(array $scopes): array
+    public static function sanitizeScopes(mixed $scopes): array
     {
         $allowedScopes = array_keys(config('openid.passport.tokens_can', []));
 
-        $normalized = collect($scopes)
+        $normalized = collect(static::normalizeStringArrayState($scopes))
             ->map(static fn ($scope): string => trim((string) $scope))
             ->filter()
             ->values();
@@ -261,6 +267,32 @@ class OAuthClientResource extends Resource
         }
 
         return $normalized->unique()->values()->all();
+    }
+
+    public static function deleteClient(OAuthClient $record): bool
+    {
+        return DB::transaction(function () use ($record): bool {
+            $accessTokenIds = DB::table('oauth_access_tokens')
+                ->where('client_id', $record->getKey())
+                ->pluck('id')
+                ->all();
+
+            if ($accessTokenIds !== []) {
+                DB::table('oauth_refresh_tokens')
+                    ->whereIn('access_token_id', $accessTokenIds)
+                    ->delete();
+            }
+
+            DB::table('oauth_access_tokens')
+                ->where('client_id', $record->getKey())
+                ->delete();
+
+            DB::table('oauth_auth_codes')
+                ->where('client_id', $record->getKey())
+                ->delete();
+
+            return (bool) $record->delete();
+        });
     }
 
     /**
@@ -296,7 +328,7 @@ class OAuthClientResource extends Resource
                 ->all();
         }
 
-        return collect(explode(',', $state))
+        return collect(preg_split('/[\r\n,]+/', $state) ?: [])
             ->map(static fn (string $item): string => trim($item))
             ->filter()
             ->values()
